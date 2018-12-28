@@ -146,6 +146,7 @@ Here, useEffect gets ‘gender’ as the second parameter (in the array), and on
 As you can see in my examples, hooks are extremely useful and can wake the code much more elegant. I encourage you to try them but wait till it ready before using it in production.
 In addition to that, hooks also allow users to share code between components because you can use the same states or effects for different components. Many hooks are available online, and you can use them in your code. https://usehooks.com is an example of such a repository.
 
+All code can be found [here](https://github.com/amitai10/react-hooks-example).
 
 ## References
 - https://reactjs.org/docs/hooks-intro.html
