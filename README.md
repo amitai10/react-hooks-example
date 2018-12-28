@@ -1,68 +1,155 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# An introduction to react hooks
 
-## Available Scripts
+React hooks is a new feature introduced in version 16.7.0-alpha.  
+It is not a revolution because they are not breaking changes, and react will still be compatible with older code, but it will change the way we are using react in the future when it becomes mature.
 
-In the project directory, you can run:
+## What are react hooks
+React hooks are set of methods that can be used inside of react component and add new functionality like state management, component lifecycle, and more. Up until now, those capabilities were only available to classes components and not functional components. The motivation to add hooks was to make the code cleaner and clearer, make it more “functional” and improve the performance, because functions are translated to a faster code then classes.
 
-### `npm start`
+Personally, I prefer using as much function component as I can, and found classes components less attractive, so I’m in favor of react hooks very much.
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+There are many hooks:  
+- useState
+- useEffect
+- useContext
+- useReducer
+- useCallback
+- useMemo
+- useRef
+- useImperativeMethods
+- useLayoutEffect
 
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
+In this blog post, I will describe __useState__ and __useEffect__ hooks and how to use them.
 
-### `npm test`
+## useState
+useState allows you to add a local state into a functional component. Just to be clear, this state is local to the component (like in class component), and not global as in redux or mobx. There are technics to use it as a global state but I’ll not cover it in this post. A functional component can have multiple independent states.
+This is an example for a simple component that counts the number of clicks:
 
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```js
+import React, { useState } from "react";
 
-### `npm run build`
+export function App() {
+  const [count, setCount] = useState(0);
 
-Builds the app for production to the `build` folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={() => setCount(count + 1)}>Click me</button>
+    </div>
+  );
+}
+```
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
+useState gets as a parameter the initial state and returns two objects:  
+The newly created state object, and a method to change the state. Every time the method will be called, the component will re-rendered with the new state.
+In this example, the state is the count of clicks, every time the user presses the button, setCount is called with the new count.
+Very simple right?
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+As I said, the component can have multiple independent states of a different type:
+```js
+import React, { useState } from "react";
 
-### `npm run eject`
+export function MultipleStates() {
+  const [count, setCount] = useState(0);
+  const [flag, setFlag] = useState(false);
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={() => setCount(count + 1)}>Click me</button>
+      <p>Flag is {flag.toString()}</p>
+      <button onClick={() => setFlag(!flag)}>Change flag</button>
+    </div>
+  );
+}
+```
+I added a new state for a flag, that changes from true to false.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## useEffect
+useEffect hook, is very similar to componentDidMount lifecycle method in a class component.
+You can use this hook to add functionality before or after the the function is called. You can control if the effect will run every time the function runs (the “render” of the component), only once or everytime a value (usually a prop) has changed.
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```js
+import React, { useEffect } from 'react';
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+export function LifecycleDemo() {
+  useEffect(() => {
+    console.log('render!');
+    return () => console.log('unmounting...');
+  })
 
-## Learn More
+  return <div>I'm a lifecycle demo</div>;
+```
+useEffect gets as parameter a function, that will run when the function will be called (“render”). If it returns a method, the returned method will be run when the component will unmount.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+A great use case is when fetching data from an API. in the next example I will use both setState and setEffect to fetch and show data from an API:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```js
+import React, { useEffect, useState } from 'react';
 
-### Code Splitting
+export function FetchData() {
+  const [name, setName] = useState({ title: "", first: "", last: ""});
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+  useEffect(async () => {
+    const res = await fetch('https://randomuser.me/api/');
+    const json = await res.json();
+    setName(json.results[0].name);
+  },[])
 
-### Analyzing the Bundle Size
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+  return (
+    <div>
+      {`The person name is: ${name.title} ${name.first} ${name.last}`}
+    </div>
+  );
+}
+```
+One thing to notice is the second parameter of useEffect. When I add an empty array, the useEffect will occur only once. Without it, it will be called every state change, which means it will be run forever (why?).
 
-### Making a Progressive Web App
+The last example will show how to fetch the call useEffect only when needed, I will add a wrap component that will change the gender of the person:
+```js
+import React, { useEffect, useState } from "react";
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+function FetchDataWithGender({ gender }) {
+  const [name, setName] = useState({ title: "", first: "", last: "" });
 
-### Advanced Configuration
+  useEffect(
+    async () => {
+      const res = await fetch(`https://randomuser.me/api?gender=${gender}`);
+      const json = await res.json();
+      setName(json.results[0].name);
+    },
+    [gender]
+  );
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
+  return (
+    <div>{`The person name is: ${name.title} ${name.first} ${name.last}`}</div>
+  );
+}
 
-### Deployment
+export function WrapperFetchDataWithGender() {
+  const [gender, setGender] = useState("female");
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
+  return (
+    <div>
+      <p>Select Gender</p>
+      <button onClick={() => setGender("male")}>Male</button>
+      <button onClick={() => setGender("female")}>Female</button>
+      <FetchDataWithGender gender={gender} />
+    </div>
+  );
+}
+```
+Here, useEffect gets ‘gender’ as the second parameter (in the array), and only if the gender is changed, it will re-fetch the data from the API.
 
-### `npm run build` fails to minify
+## Conclusion
+As you can see in my examples, hooks are extremely useful and can wake the code much more elegant. I encourage you to try them but wait till it ready before using it in production.
+In addition to that, hooks also allow users to share code between components because you can use the same states or effects for different components. Many hooks are available online, and you can use them in your code. https://usehooks.com is an example of such a repository.
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+
+## References
+- https://reactjs.org/docs/hooks-intro.html
+- https://daveceddia.com/
+
+
+
